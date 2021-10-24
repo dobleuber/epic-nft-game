@@ -12,6 +12,7 @@ export const Arena = ({ gameContract, characterNFT, setCharacter }) => {
   const [boss, setBoss] = useState(null);
   const [attackState, setAttackState] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [isCritical, setIsCritical] = useState(false);
 
   const runAttackAction = async () => {
     try {
@@ -26,6 +27,7 @@ export const Arena = ({ gameContract, characterNFT, setCharacter }) => {
         setShowToast(true);
         setTimeout(() => {
           setShowToast(false);
+          setIsCritical(false);
         }, 5000);
       }
     } catch (error) {
@@ -47,11 +49,14 @@ export const Arena = ({ gameContract, characterNFT, setCharacter }) => {
   },[gameContract])
 
   useEffect(() => {
-    const onAttackComplete = (newBossHp, newPlayerHp) => {
+    const onAttackComplete = (newBossHp, newPlayerHp, isCriticalHit) => {
       const bossHp = newBossHp.toNumber();
       const playerHp = newPlayerHp.toNumber();
+      const isCritical = isCriticalHit;
 
-      console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
+      console.log('critical', isCritical)
+
+      console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp} was critical ${isCritical}`);
 
       /*
         * Update both player and boss Hp
@@ -63,6 +68,8 @@ export const Arena = ({ gameContract, characterNFT, setCharacter }) => {
       setCharacter((prevState) => {
         return { ...prevState, hp: playerHp };
       });
+
+      setIsCritical(isCritical)
     };
 
     if (gameContract) {
@@ -75,13 +82,19 @@ export const Arena = ({ gameContract, characterNFT, setCharacter }) => {
         gameContract.off('AttackCompleted', onAttackComplete);
       }
     }
-  },[gameContract, setCharacter])
+  },[gameContract, setCharacter, setIsCritical])
 
   return (
     <div className="arena-container">
       {boss && showToast && (
         <div id="toast" className="show">
-          <div id="desc">{`💥 ${boss.name} was hit for ${characterNFT.attackDamage}!`}</div>
+          <div id="desc">
+            {
+              isCritical  
+              ? `💥 ${boss.name} was a critical hit for ${characterNFT.attackDamage * 2}!`
+              : `💥 ${boss.name} was hit for ${characterNFT.attackDamage}!`
+            }
+          </div>
         </div>
       )}
       {/* Replace your Boss UI with this */}
@@ -142,5 +155,5 @@ export const Arena = ({ gameContract, characterNFT, setCharacter }) => {
         </div>
       )}
     </div>
-);
+  );
 };
